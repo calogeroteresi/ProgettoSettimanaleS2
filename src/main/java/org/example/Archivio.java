@@ -11,7 +11,6 @@ public class Archivio {
 
     private List<ElementoArchivio> archivio = new ArrayList<>();
 
-    // Altre variabili e costanti necessarie
 
     public void aggiungiElemento(ElementoArchivio elemento) {
         archivio.add(elemento);
@@ -19,9 +18,16 @@ public class Archivio {
 
     public void rimuoviElementoPerISBN(long isbn) {
         archivio = archivio.stream()
-                .filter(elemento -> elemento.getIsbn() != isbn)
+                .filter(elemento -> {
+                    boolean isToBeRemoved = elemento.getIsbn() == isbn;
+                    if (isToBeRemoved) {
+                        ElementoArchivio.isbnsPresenti.remove(isbn);
+                    }
+                    return !isToBeRemoved;
+                })
                 .collect(Collectors.toList());
     }
+
 
     public Optional<ElementoArchivio> ricercaPerISBN(long isbn) {
         return archivio.stream()
@@ -43,33 +49,50 @@ public class Archivio {
                 .collect(Collectors.toList());
     }
 
+
     public void salvaElementiSuDisco() {
         try {
             File file = new File("dirArchivio/elementi.txt");
 
+            List<Long> isbnsInseritiFile = new ArrayList<>();
+
             String stringaElementi = archivio.stream()
                     .map(elemento -> {
-                        if (elemento instanceof Libro) {
-                            return elemento.getIsbn() + "@" + elemento.getTitolo() + "@" +
-                                    elemento.getAnnoPubblicazione() + "@" + elemento.getNumeroPagine() + "@" +
-                                    ((Libro) elemento).getAutore() + "@" + ((Libro) elemento).getGenere();
-                        } else if (elemento instanceof Rivista) {
-                            return elemento.getIsbn() + "@" + elemento.getTitolo() + "@" +
-                                    elemento.getAnnoPubblicazione() + "@" + elemento.getNumeroPagine() + "@" +
-                                    ((Rivista) elemento).getPeriodicita();
+                        long isbn = elemento.getIsbn();
+
+                        if (isbnsInseritiFile.contains(isbn)) {
+                            System.out.println("ISBN già presente nel file, ignoro l'elemento: " + isbn);
+                            return null;
+                        }
+
+                        isbnsInseritiFile.add(isbn);
+
+                        if (elemento instanceof Libro libro) {
+                            return libro.getIsbn() + " @ " + libro.getTitolo() + " @ " +
+                                    libro.getAnnoPubblicazione() + " @ " + libro.getNumeroPagine() + " @ " +
+                                    libro.getAutore() + " @ " + libro.getGenere();
+                        } else if (elemento instanceof Rivista rivista) {
+                            return rivista.getIsbn() + " @ " + rivista.getTitolo() + " @ " +
+                                    rivista.getAnnoPubblicazione() + " @ " + rivista.getNumeroPagine() + " @ " +
+                                    rivista.getPeriodicita();
                         } else {
-                            return elemento.getIsbn() + "@" + elemento.getTitolo() + "@" +
-                                    elemento.getAnnoPubblicazione() + "@" + elemento.getNumeroPagine();
+                            return "";
                         }
                     })
-                    .collect(Collectors.joining("#"));
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.joining("#\n"));
 
             FileUtils.writeStringToFile(file, stringaElementi, Charset.defaultCharset(), true);
+
+            System.out.println("ISBN inseriti nel file: " + isbnsInseritiFile);
         } catch (IOException e) {
             e.printStackTrace();
-            // Puoi gestire l'eccezione in modo diverso, ad esempio, stampando un messaggio di errore
         }
     }
+
+
+
+
     public void caricaElementiDaDisco() {
         try {
             File file = new File("dirArchivio/elementi.txt");
@@ -77,24 +100,45 @@ public class Archivio {
                 String fileContent = FileUtils.readFileToString(file, Charset.defaultCharset());
                 String[] elementiArray = fileContent.split("#");
 
-                archivio = Arrays.stream(elementiArray)
+                Arrays.stream(elementiArray)
                         .map(this::creaElementoDaStringa)
-                        .collect(Collectors.toList());
+                        .filter(Objects::nonNull)
+                        .filter(elemento -> !archivio.contains(elemento))
+                        .forEach(this::aggiungiElemento);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private ElementoArchivio creaElementoDaStringa(String elementoStringa) {
-        String[] attributi = elementoStringa.split("@");
-        long isbn = Long.parseLong(attributi[0]);
-        String titolo = attributi[1];
-        int annoPubblicazione = Integer.parseInt(attributi[2]);
-        int numeroPagine = Integer.parseInt(attributi[3]);
 
-        return new ElementoArchivio(isbn, titolo, annoPubblicazione, numeroPagine);
+
+    private ElementoArchivio creaElementoDaStringa(String elementoStringa) {
+        elementoStringa = elementoStringa.trim();
+        String[] attributi = elementoStringa.split("@");
+        long isbn = Long.parseLong(attributi[0].trim());
+        String titolo = attributi[1].trim();
+        int annoPubblicazione = Integer.parseInt(attributi[2].trim());
+        int numeroPagine = Integer.parseInt(attributi[3].trim());
+
+        if (ElementoArchivio.isbnsPresenti.contains(isbn)) {
+            System.out.println("ISBN già presente nell'archivio, ignoro l'elemento: " + isbn + "proveniente dal file");
+            return null;
+        }
+
+        if (attributi.length == 6) {
+            String autore = attributi[4].trim();
+            String genere = attributi[5].trim();
+            return new Libro(isbn, titolo, annoPubblicazione, numeroPagine, autore, genere);
+        } else if (attributi.length == 5) {
+            Periodicita periodicita = Periodicita.valueOf(attributi[4].trim());
+            return new Rivista(isbn, titolo, annoPubblicazione, numeroPagine, periodicita);
+        } else {
+            return new ElementoArchivio(isbn, titolo, annoPubblicazione, numeroPagine);
+        }
     }
+
+
 
     public void stampaDataArchivio() {
         archivio.forEach(System.out::println);

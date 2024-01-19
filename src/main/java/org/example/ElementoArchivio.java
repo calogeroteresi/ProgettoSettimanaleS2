@@ -13,19 +13,19 @@ public class ElementoArchivio {
 
     private int numeroPagine;
 
-    private static Set<Long> isbnsPresenti = new HashSet<>();
+    public static Set<Long> isbnsPresenti = new HashSet<>();
 
     public ElementoArchivio(long isbn, String titolo, int annoPubblicazione, int numeroPagine) {
-        if (isbnValido(isbn) && !isbnGiaPresente(isbn)) {
-            this.isbn = isbn;
-            isbnsPresenti.add(isbn);
-        } else {
-            throw new IllegalArgumentException("ISBN non valido o già presente: " + isbn);
-        }
+        validateIsbn(isbn);
+
+        this.isbn = isbn;
         this.titolo = titolo;
         this.annoPubblicazione = annoPubblicazione;
         this.numeroPagine = numeroPagine;
+
+        isbnsPresenti.add(isbn);
     }
+
 
     public int getNumeroPagine() {
         return numeroPagine;
@@ -59,27 +59,23 @@ public class ElementoArchivio {
         this.isbn = isbn;
     }
 
-    private boolean isbnValido(long isbn) {
+    private void validateIsbn(long isbn) {
+        if (isbn <= 0) {
+            throw new IllegalArgumentException("ISBN deve essere un valore positivo.");
+        }
+
         String isbnString = String.valueOf(isbn);
 
-        if (isbnString.length() != 13) {
-            return false;
+        if (isbnString.length() != 13 || isbnString.charAt(0) == '0' || !isbnString.matches("\\d+")) {
+            throw new IllegalArgumentException("ISBN non valido: " + isbn);
         }
 
-        if (isbnString.charAt(0) == '0') {
-            return false;
+        if (isbnGiaPresente(isbn)) {
+            throw new DuplicateIsbnException("ISBN già presente: " + isbn);
         }
-
-        for (int i = 0; i < isbnString.length(); i++) {
-            if (!Character.isDigit(isbnString.charAt(i))) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
-    private boolean isbnGiaPresente(long isbn) {
+    boolean isbnGiaPresente(long isbn) {
         return isbnsPresenti.contains(isbn);
     }
 
