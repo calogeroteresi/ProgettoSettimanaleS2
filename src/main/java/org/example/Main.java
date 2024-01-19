@@ -4,14 +4,20 @@ package org.example;
 // click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 public class Main {
     public static void main(String[] args) {
-        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-        // to see how IntelliJ IDEA suggests fixing it.
-        System.out.printf("Hello and welcome!");
 
-        for (int i = 1; i <= 5; i++) {
-            //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-            // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-            System.out.println("i = " + i);
-        }
+        Archivio archivio = new Archivio();
+
+        ElementoArchivio libro1 = new Libro(1_125_487_545_874L, "Titolo Libro 1", 2022, 300, "Autore1", "Genere1");
+        ElementoArchivio libro2 = new Libro(1_541_142_574_541L, "Titolo Libro 2", 2022, 250, "Autore2", "Genere2");
+        ElementoArchivio rivista1 = new Rivista(2_541_544_544_874L, "Titolo Rivista 1", 2022, 50, Periodicita.MENSILE);
+
+        archivio.aggiungiElemento(libro1);
+        archivio.aggiungiElemento(libro2);
+        archivio.aggiungiElemento(rivista1);
+        archivio.stampaDataArchivio();
+        archivio.salvaElementiSuDisco();
+        archivio.caricaElementiDaDisco();
+
+
     }
 }
