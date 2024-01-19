@@ -1,16 +1,20 @@
 package org.example;
 
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
+
+
 import java.util.stream.Collectors;
 
 public class Archivio {
 
     private List<ElementoArchivio> archivio = new ArrayList<>();
-
+    private static final Logger logger = LoggerFactory.getLogger("Archivio");
 
     public void aggiungiElemento(ElementoArchivio elemento) {
         archivio.add(elemento);
@@ -85,8 +89,9 @@ public class Archivio {
             FileUtils.writeStringToFile(file, stringaElementi, Charset.defaultCharset(), true);
 
             System.out.println("ISBN inseriti nel file: " + isbnsInseritiFile);
+            logger.info("ISBN inseriti nel file: {}", isbnsInseritiFile);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Errore durante il salvataggio degli elementi su disco", e);
         }
     }
 
@@ -107,7 +112,7 @@ public class Archivio {
                         .forEach(this::aggiungiElemento);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Errore durante il salvataggio degli elementi dal disco", e);
         }
     }
 

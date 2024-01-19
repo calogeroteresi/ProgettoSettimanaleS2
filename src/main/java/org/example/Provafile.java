@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 
 public class Provafile {
@@ -32,9 +33,9 @@ public class Provafile {
 
             System.out.println(Arrays.toString(file2.list()));
 
-            Arrays.stream(file2.list()).forEach(System.out::println);
+            Arrays.stream(Objects.requireNonNull(file2.list())).forEach(System.out::println);
 
-            System.out.println(file2.list().length);
+            System.out.println(Objects.requireNonNull(file2.list()).length);
 
             /* FileUtils.deleteQuietly(file);
             FileUtils.deleteDirectory(new File("filepath")); */
